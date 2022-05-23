@@ -36,6 +36,8 @@
 #include <xercesc/util/RefHashTableOf.hpp>
 #include "Win32TransService.hpp"
 
+#define TRANSCODE_CODE_PAGE CP_UTF8
+
 namespace XERCES_CPP_NAMESPACE {
 
 
@@ -243,14 +245,14 @@ CPMapEntry::CPMapEntry( const   char* const     encodingName
     , fManager(manager)
 {
     // Transcode the name to Unicode and store that copy
-    int targetLen=::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, encodingName, -1, NULL, 0);
+    int targetLen=::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, encodingName, -1, NULL, 0);
     if(targetLen!=0)
     {
         fEncodingName = (XMLCh*) fManager->allocate
         (
             (targetLen + 1) * sizeof(XMLCh)
         );//new XMLCh[targetLen + 1];
-        ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, encodingName, -1, (LPWSTR)fEncodingName, targetLen);
+        ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, encodingName, -1, (LPWSTR)fEncodingName, targetLen);
         fEncodingName[targetLen] = 0;
 
         //
@@ -491,14 +493,14 @@ Win32TransService::Win32TransService(MemoryManager* manager) :
         //
         if (isAlias(encodingKey, aliasBuf, nameBufSz))
         {
-            int targetLen = ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, aliasBuf, -1, NULL, 0);
+            int targetLen = ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, aliasBuf, -1, NULL, 0);
             if(targetLen!=0)
             {
                 XMLCh* uniAlias = (XMLCh*) fManager->allocate
                 (
                     (targetLen + 1) * sizeof(XMLCh)
                 );//new XMLCh[targetLen + 1];
-                ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, aliasBuf, -1, (LPWSTR)uniAlias, targetLen);
+                ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, aliasBuf, -1, (LPWSTR)uniAlias, targetLen);
                 uniAlias[targetLen] = 0;
                 xmlch_wcsupr(uniAlias);
 
@@ -506,14 +508,14 @@ Win32TransService::Win32TransService(MemoryManager* manager) :
                 CPMapEntry* aliasedEntry = fCPMap->get(uniAlias);
                 if (aliasedEntry)
                 {
-                    int targetLen = ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, nameBuf, -1, NULL, 0);
+                    int targetLen = ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, nameBuf, -1, NULL, 0);
                     if(targetLen!=0)
                     {
                         XMLCh* uniName = (XMLCh*) fManager->allocate
                         (
                             (targetLen + 1) * sizeof(XMLCh)
                         );//new XMLCh[targetLen + 1];
-                        ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, nameBuf, -1, (LPWSTR)uniName, targetLen);
+                        ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, nameBuf, -1, (LPWSTR)uniName, targetLen);
                         uniName[targetLen] = 0;
                         xmlch_wcsupr(uniName);
 
@@ -956,7 +958,7 @@ XMLSize_t Win32LCPTranscoder::calcRequiredSize(const char* const srcText
     if (!srcText)
         return 0;
 
-    return ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, srcText, -1, NULL, 0);
+    return ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, srcText, -1, NULL, 0);
 }
 
 
@@ -966,7 +968,7 @@ XMLSize_t Win32LCPTranscoder::calcRequiredSize(const XMLCh* const srcText
     if (!srcText)
         return 0;
 
-    return ::WideCharToMultiByte(CP_ACP, 0, reinterpret_cast<LPCWSTR>(srcText), -1, NULL, 0, NULL, NULL);
+    return ::WideCharToMultiByte(TRANSCODE_CODE_PAGE, 0, reinterpret_cast<LPCWSTR>(srcText), -1, NULL, 0, NULL, NULL);
 }
 
 char* Win32LCPTranscoder::transcode(const XMLCh* const toTranscode,
@@ -983,7 +985,7 @@ char* Win32LCPTranscoder::transcode(const XMLCh* const toTranscode,
 
         // Allocate a buffer of that size plus one for the null and transcode
         retVal = (char*) manager->allocate((neededLen + 1) * sizeof(char)); //new char[neededLen + 1];
-        ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)toTranscode, -1, retVal, (int)neededLen+1, NULL, NULL);
+        ::WideCharToMultiByte(TRANSCODE_CODE_PAGE, 0, (LPCWSTR)toTranscode, -1, retVal, (int)neededLen+1, NULL, NULL);
 
         // And cap it off anyway just to make sure
         retVal[neededLen] = 0;
@@ -1016,7 +1018,7 @@ XMLCh* Win32LCPTranscoder::transcode(const char* const toTranscode,
 
         // Allocate a buffer of that size plus one for the null and transcode
         retVal = (XMLCh*) manager->allocate((neededLen + 1) * sizeof(XMLCh)); //new XMLCh[neededLen + 1];
-        ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, toTranscode, -1, (LPWSTR)retVal, (int)neededLen + 1);
+        ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, toTranscode, -1, (LPWSTR)retVal, (int)neededLen + 1);
 
         // Cap it off just to make sure. We are so paranoid!
         retVal[neededLen] = 0;
@@ -1049,7 +1051,7 @@ bool Win32LCPTranscoder::transcode( const   char* const     toTranscode
     }
 
     // This one has a fixed size output, so try it and if it fails it fails
-    if ( 0 == ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, toTranscode, -1, (LPWSTR)toFill, (int)(maxChars + 1)) )
+    if ( 0 == ::MultiByteToWideChar(TRANSCODE_CODE_PAGE, MB_PRECOMPOSED, toTranscode, -1, (LPWSTR)toFill, (int)(maxChars + 1)) )
         return false;
     return true;
 }
@@ -1074,7 +1076,7 @@ bool Win32LCPTranscoder::transcode( const   XMLCh* const    toTranscode
     }
 
     // This one has a fixed size output, so try it and if it fails it fails
-    if ( 0 == ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)toTranscode, -1, toFill, (int)(maxBytes + 1), NULL, NULL) )
+    if ( 0 == ::WideCharToMultiByte(TRANSCODE_CODE_PAGE, 0, (LPCWSTR)toTranscode, -1, toFill, (int)(maxBytes + 1), NULL, NULL) )
         return false;
 
     // Cap it off just in case
